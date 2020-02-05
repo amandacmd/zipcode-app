@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>ZipCode App</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.8.0/css/bulma.css"
+    />
+    <script
+      defer
+      src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"
+    ></script>
+    <style>
+      .icon-remove,
+      .icon-check {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="hero hero-body is-dark container-fluid">
+      <h1 class="title">US Location Info</h1>
+      <h2 class="subtitle">Enter a zipcode to get the location info</h2>
+      <form id="zipForm">
+        <div class="field">
+          <div class="control has-icons-left has-icons-right">
+            <input
+              class="input zip is-large"
+              type="text"
+              placeholder="Enter zipcode"
+            />
+            <span class="icon is-small is-left">
+              <i class="fas fa-map-pin"></i>
+            </span>
+            <span class="icon is-small is-right icon-check">
+              <i class="fas fa-check"></i>
+            </span>
+            <span class="icon is-small is-right icon-remove">
+              <i class="fas fa-times"></i>
+            </span>
+          </div>
+        </div>
+      </form>
+    </section>
+    <br />
+
+    <div class="container">
+      <div id="output"></div>
+    </div>
+
+    <script>
+      // listen for submit
+      document
+        .querySelector("#zipForm")
+        .addEventListener("submit", getLocationInfo);
+
+      document.querySelector("body").addEventListener("click", deleteLocation);
+
+      function getLocationInfo(event) {
+        // get zip value from input
+        const zip = document.querySelector(".zip").value;
+        let output = document.querySelector("#output");
+
+        // listen for delete
+
+        // make request
+        fetch(`https://api.zippopotam.us/us/${zip}`)
+          .then(res => {
+            if (res.status !== 200) {
+              showIcon("remove");
+              output.innerHTML = `<article class="message is-danger"><div class="message-body">Invalid zipcode, please try again</div></article>`;
+              throw Error(res.statusText);
+            } else {
+              showIcon("check");
+              return res.json();
+            }
+          })
+          .then(data => {
+            // show location info
+            let arrOutput = "";
+            data.places.forEach(place => {
+              arrOutput += `
+                <article class="message is-primary">
+                    <div class="message-header">
+                        <p>Location info</p> 
+                        <button class="delete"></button>   
+                    </div>
+                    <div class="message-body">
+                        <ul>
+                            <li><strong>City: </strong>${place["place name"]}</li>
+                            <li><strong>State: </strong>${place["state"]}</li>
+                            <li><strong>Longitude: </strong>${place["longitude"]}</li>
+                            <li><strong>Latitude: </strong>${place["latitude"]}</li>
+                        </ul>
+                    </div>
+                </article>`;
+            });
+
+            // insert into output div
+            output.innerHTML = arrOutput;
+          })
+          .catch(err => console.log(err));
+
+        event.preventDefault();
+      }
+
+      function showIcon(icon) {
+        // clear icons
+        document.querySelector(".icon-remove").style.display = "none";
+        document.querySelector(".icon-check").style.display = "none";
+
+        // show correct icon
+        document.querySelector(`.icon-${icon}`).style.display = "inline-flex";
+      }
+
+      // delete location box
+      function deleteLocation(event) {
+        if (event.target.className == "delete") {
+          document.querySelector(".message").remove();
+          document.querySelector(".icon-check").remove();
+          document.querySelector(".zip").value = "";
+        }
+      }
+    </script>
+  </body>
+</html>
